@@ -1,0 +1,25 @@
+{
+  "DO_TOKEN": "",
+  "WAIT_TIME": 60,
+  "DOWNLOAD_FOLDER": "download",
+  "ARIA_PRINT_INTERVAL": 5,
+  "MACHINE_CONFIG": {
+    "TYPE": "1GB",
+    "REGION": "NYC1",
+    "IMAGE":"ubuntu-17-10-x64",
+    "AVAIL_REGIONS": [
+      "AMS2",
+      "AMS3",
+      "BLR1",
+      "FRA1",
+      "LON1",
+      "NYC1",
+      "NYC2",
+      "NYC",
+      "SFO1",
+      "SFO2",
+      "SGP1",
+      "TOR1"
+    ]
+  }
+}
