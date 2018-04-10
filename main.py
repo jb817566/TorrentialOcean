@@ -37,10 +37,12 @@ manager = digitalocean.Manager(token=Configuration['DO_TOKEN'])
 ARIA_PRINT_INTERVAL = Configuration['ARIA_PRINT_INTERVAL']
 T_FILE = sys.argv[1]
 DOWNLOAD_FOLDER = Configuration['DOWNLOAD_FOLDER']
-command_arr = ['apt update', 'apt install aria2 -y', 'mkdir -p download'
-               , 'cd download',
-               'aria2c --seed-time=0 --summary-interval={0} --show-console-readout=false \"{1}\"'.format(ARIA_PRINT_INTERVAL,
-               T_FILE)]
+
+command_arr = ["apt update",
+"apt install aria2 -y",
+"mkdir -p download",
+"cd download",
+"aria2c --seed-time=0 --summary-interval={0} --show-console-readout=false \"{1}\"".format(ARIA_PRINT_INTERVAL,T_FILE) ]
 
 
 # utils
@@ -140,8 +142,9 @@ def main_function():
     while check_port(dropinfo.ip_address, 22) == False:
         time.sleep(3)
     print 'Droplet is Up!'
-    run_cmd_script(dodroplet.ip_address, dodroplet.name + '_private.pem'
-                   , ' && '.join(command_arr))
+    cmd= 'apt update && apt install aria2 -y && mkdir download && cd download && aria2c --seed-time=0 \"' + T_FILE + '\"'
+    print('executing' + cmd)
+    run_cmd_script(dodroplet.ip_address, dodroplet.name + '_private.pem', cmd)
     print 'Files Downloaded To Droplet'
     download_dir(dodroplet.ip_address, dodroplet.name + '_private.pem',
                  '/root/{0}/'.format(DOWNLOAD_FOLDER))
