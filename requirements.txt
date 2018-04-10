@@ -1,0 +1,4 @@
+paramiko==2.4.1
+scp==0.10.2
+pycrypto==2.6.1
+python_digitalocean==1.13.2
