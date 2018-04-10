@@ -85,7 +85,7 @@ def run_cmd_script(
     username='root',
 ):
     ssh.connect(host, username=username, key_filename=keyfile)
-    (stdin, stdout, stderr) = ssh.exec_command(command)
+    (stdin, stdout, stderr) = ssh.exec_command(command, get_pty=True)
     stdin.close()
     for line in iter(lambda: stdout.readline(2048), ''):
         sys.stdout.flush()
