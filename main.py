@@ -39,7 +39,7 @@ T_FILE = sys.argv[1]
 DOWNLOAD_FOLDER = Configuration['DOWNLOAD_FOLDER']
 command_arr = ['apt update', 'apt install aria2 -y', 'mkdir -p download'
                , 'cd download',
-               'aria2c --seed-time=0 --summary-interval={0} --show-console-readout=false "{1}"'.format(ARIA_PRINT_INTERVAL,
+               'aria2c --seed-time=0 --summary-interval={0} --show-console-readout=false \"{1}\"'.format(ARIA_PRINT_INTERVAL,
                T_FILE)]
 
 
