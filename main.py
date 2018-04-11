@@ -10,25 +10,25 @@ import time
 from digitalocean import SSHKey
 from digitalocean import Action
 import string
-import sys
 import json
 import random
 import paramiko
 import os
+import signal
+import sys
 from scp import SCPClient
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 ssh.load_system_host_keys()
 from Crypto.PublicKey import RSA
 
-##########
-
+#########
 Configuration = {}
 with open('config.json') as json_data_file:
     Configuration = json.load(json_data_file)
 
 ##########
-
+current_droplet = None
 # Setup digitalocean manager
 
 if Configuration['DO_TOKEN'] == "" or len(Configuration['DO_TOKEN']) < 20:
@@ -39,10 +39,11 @@ manager = digitalocean.Manager(token=Configuration['DO_TOKEN'])
 # Construct runtime vars
 
 ARIA_PRINT_INTERVAL = Configuration['ARIA_PRINT_INTERVAL']
-T_FILE = sys.argv[1]
 DOWNLOAD_FOLDER = Configuration['DOWNLOAD_FOLDER']
+if len(sys.argv) == 2:
+    T_FILE = sys.argv[1]
 
-command_arr = ["apt update",
+    command_arr = ["apt update",
                "apt install aria2 -y",
                "mkdir -p download",
                "cd download",
@@ -50,6 +51,22 @@ command_arr = ["apt update",
 
 
 # utils
+
+def cleanup():
+    print("Exiting")
+    if current_droplet is not None:
+        print("Cleaning up gracefully")
+        cleaner = digitalocean.Manager(token=Configuration['DO_TOKEN'])
+        dropletlist = cleaner.get_all_droplets()
+        print(next(iter(dropletlist)))
+        to_cleanup = next((x for x in dropletlist if x.name == current_droplet), None)
+        if to_cleanup is not None:
+            to_cleanup.load()
+            to_cleanup.destroy()
+            print("Destroyed " + to_cleanup.name);
+        else:
+            print("Droplet does not exist anymore")
+    sys.exit(0)
 
 def check_port(host, port):
     with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as \
@@ -63,7 +80,12 @@ def check_port(host, port):
 def progress(filename, size, sent):
     sys.stdout.write("%s\'s progress: %.2f%%   \r" % (filename,
                                                       float(sent) / float(size) * 100))
-
+def load_droplet_details(drop):
+    action = Action(id=drop.action_ids[0], token=drop.token,
+                    droplet_id=drop.id)
+    action.load()
+    action.wait(5)
+    return drop.load()
 
 ######
 
@@ -115,8 +137,10 @@ def gen_key(privname='private.pem', pubname='public.pem'):
 
 
 def generate_new_server():
+    global current_droplet
     random_droplet_name = ''.join(random.choice(string.ascii_uppercase
                                                 + string.digits) for _ in range(20))
+    current_droplet = random_droplet_name
     gen_key(random_droplet_name + '_private.pem', random_droplet_name
             + '_public.pem')
     keyid = upload_ssh_key(random_droplet_name + '_public.pem',
@@ -132,12 +156,9 @@ def generate_new_server():
         token=Configuration['DO_TOKEN'],
     )
     drop.create()
-    action = Action(id=drop.action_ids[0], token=drop.token,
-                    droplet_id=drop.id)
-    action.load()
-    action.wait(5)
-    dropinfo = drop.load()
+    dropinfo = load_droplet_details(drop)
     return (drop, dropinfo)
+
 
 
 def download_torrent(torrent_link):
@@ -156,12 +177,34 @@ def download_torrent(torrent_link):
     print 'Downloaded Locally! to ' + DOWNLOAD_FOLDER
     print 'Nuking the droplet!'
     dodroplet.destroy()
-    print 'K Thx Bye!'
+
+class catch_sigint(object):
+    def __init__(self):
+        self.caught_sigint = False
+    def note_sigint(self, signum, frame):
+        self.caught_sigint = True
+    def __enter__(self):
+        self.oldsigint = signal.signal(signal.SIGINT, self.note_sigint)
+        return self
+    def __exit__(self, *args):
+        signal.signal(signal.SIGINT, self.oldsigint)
+    def __call__(self):
+        return self.caught_sigint
 
 
-if os.path.isfile(T_FILE):
-    with open(T_FILE, 'rb') as inputfile:
-        for line in inputfile:
-            download_torrent(line)
-else:
-    download_torrent(T_FILE)
+def main_program():
+    try:
+        if len(sys.argv) == 2:
+            if os.path.isfile(T_FILE):
+                with open(T_FILE, 'rb') as inputfile:
+                    for line in inputfile:
+                        download_torrent(line)
+            else:
+                download_torrent(T_FILE)
+            print 'K Thx Bye!'
+    except KeyboardInterrupt:
+        pass
+    finally:
+        cleanup()
+
+main_program()
