@@ -5,8 +5,10 @@ This project uses Python2
 
 # Usage:
 1. Install any necessary requirements with `pip install -r requirements.txt`
-2. Run `python main.py [Torrent Link or Magnet Link]`
-3. Killing with `Ctrl-C` will also destroy the droplet to clean up
+2. Configure with the `config.json` file to your liking. If you don't want to put it in the config file, you can also set the DO_TOKEN environment variable with:  
+ `export DO_TOKEN=[YOUR DO TOKEN]`
+3. Run `python main.py [Torrent Link or Magnet Link]`
+4. Killing with `Ctrl-C` will also destroy the droplet to clean up
 
 ### How it works
 1. Generates a keypair to be used to authenticate with a droplet
