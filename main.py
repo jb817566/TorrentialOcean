@@ -30,9 +30,12 @@ with open('config.json') as json_data_file:
 ##########
 current_droplet = None
 # Setup digitalocean manager
-
-if Configuration['DO_TOKEN'] == "" or len(Configuration['DO_TOKEN']) < 20:
-    Configuration['DO_TOKEN'] = os.environ['DO_TOKEN']
+if Configuration.get('DO_TOKEN', None) is None or len(Configuration['DO_TOKEN']) < 20:
+    if os.environ.get('DO_TOKEN', None) is None or len(os.environ['DO_TOKEN']) < 20:
+        print("Please set DO_TOKEN environment variable or set it in config")
+        sys.exit(0)
+    else:
+        Configuration['DO_TOKEN'] = os.environ['DO_TOKEN']
 
 manager = digitalocean.Manager(token=Configuration['DO_TOKEN'])
 
@@ -210,6 +213,8 @@ def main_program():
             else:
                 download_torrent(T_FILE)
             print 'K Thx Bye!'
+        else:
+            print("Please specify a torrent link or magnet link as the first argument")
     except KeyboardInterrupt:
         pass
     finally:
