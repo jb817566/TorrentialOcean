@@ -44,10 +44,10 @@ if len(sys.argv) == 2:
     T_FILE = sys.argv[1]
 
     command_arr = ["apt update",
-               "apt install aria2 -y",
-               "mkdir -p download",
-               "cd download",
-               "aria2c --seed-time=0 --summary-interval={0} --show-console-readout=false \"{1}\"".format(ARIA_PRINT_INTERVAL, T_FILE)]
+                   "apt install aria2 -y",
+                   "mkdir -p download",
+                   "cd download",
+                   "aria2c --seed-time=0 --summary-interval={0} --show-console-readout=false \"{1}\"".format(ARIA_PRINT_INTERVAL, T_FILE)]
 
 
 # utils
@@ -58,15 +58,16 @@ def cleanup():
         print("Cleaning up gracefully")
         cleaner = digitalocean.Manager(token=Configuration['DO_TOKEN'])
         dropletlist = cleaner.get_all_droplets()
-        print(next(iter(dropletlist)))
-        to_cleanup = next((x for x in dropletlist if x.name == current_droplet), None)
+        to_cleanup = next(
+            (x for x in dropletlist if x.name == current_droplet), None)
         if to_cleanup is not None:
             to_cleanup.load()
             to_cleanup.destroy()
-            print("Destroyed " + to_cleanup.name);
+            print("Destroyed " + to_cleanup.name)
         else:
             print("Droplet does not exist anymore")
     sys.exit(0)
+
 
 def check_port(host, port):
     with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as \
@@ -80,6 +81,8 @@ def check_port(host, port):
 def progress(filename, size, sent):
     sys.stdout.write("%s\'s progress: %.2f%%   \r" % (filename,
                                                       float(sent) / float(size) * 100))
+
+
 def load_droplet_details(drop):
     action = Action(id=drop.action_ids[0], token=drop.token,
                     droplet_id=drop.id)
@@ -88,6 +91,7 @@ def load_droplet_details(drop):
     return drop.load()
 
 ######
+
 
 def download_dir(
     host,
@@ -160,7 +164,6 @@ def generate_new_server():
     return (drop, dropinfo)
 
 
-
 def download_torrent(torrent_link):
     (dodroplet, dropinfo) = generate_new_server()
     print dropinfo.ip_address
@@ -178,16 +181,21 @@ def download_torrent(torrent_link):
     print 'Nuking the droplet!'
     dodroplet.destroy()
 
+
 class catch_sigint(object):
     def __init__(self):
         self.caught_sigint = False
+
     def note_sigint(self, signum, frame):
         self.caught_sigint = True
+
     def __enter__(self):
         self.oldsigint = signal.signal(signal.SIGINT, self.note_sigint)
         return self
+
     def __exit__(self, *args):
         signal.signal(signal.SIGINT, self.oldsigint)
+
     def __call__(self):
         return self.caught_sigint
 
@@ -206,5 +214,6 @@ def main_program():
         pass
     finally:
         cleanup()
+
 
 main_program()
